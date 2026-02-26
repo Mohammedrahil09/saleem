@@ -3,6 +3,15 @@ import calendar
 import re
 from rapidfuzz import process
 from openai import OpenAI
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+
 class SmartAnalyticsEngine:
 
     def __init__(self, df):
@@ -117,42 +126,58 @@ class SmartAnalyticsEngine:
         return result
 
 
-# helper function for frontend
+# -----------------------------
+# HELPER FUNCTION
+# -----------------------------
 def run_query(df, question):
     engine = SmartAnalyticsEngine(df)
     parsed = engine.parse_question(question)
     return engine.execute_query(parsed)
 
+
+# -----------------------------
+# OPENROUTER AI FUNCTION
+# -----------------------------
 def ask_ai(df, question):
-    # Initialize the OpenRouter client
+
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key="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"
+        api_key=OPENROUTER_API_KEY
     )
 
     prompt = f"""
-    You are a senior data analyst You MUST respond entirely in English.
+You are a senior business data analyst.
 
-    Dataset columns:
-    {list(df.columns)}
+DATASET COLUMNS:
+{list(df.columns)}
 
-    Dataset sample:
-    {df.head(5).to_string()}
+SAMPLE DATA:
+{df.head(5).to_string()}
 
-    User question:
-    {question}
+USER QUESTION:
+{question}
 
-    Provide:
-    - insights
-    - trends
-    - anomalies
-    - business suggestions
-    """
+Provide:
+1. Direct answer
+2. Key insights
+3. Trends
+4. Anomalies
+5. Business recommendations
+"""
 
-    # Automatically routes to an available free model
-    response = client.chat.completions.create(
-        model="openrouter/free", 
-        messages=[{"role": "user", "content": prompt}]
-    )
-    
-    return response.choices[0].message.content
+    try:
+        response = client.chat.completions.create(
+            model="meta-llama/llama-3.1-8b-instruct",  # 🔥 reliable free model
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.3
+        )
+
+        result = response.choices[0].message.content
+
+        if not result:
+            return "⚠️ AI returned an empty response. Try rephrasing your question."
+
+        return result
+
+    except Exception as e:
+        return f"❌ AI Error: {str(e)}"

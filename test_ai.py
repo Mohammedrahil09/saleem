@@ -1,4 +1,4 @@
-'''import streamlit as st
+import streamlit as st
 import pandas as pd
 import google.generativeai as genai
 
@@ -8,4 +8,4 @@ model = genai.GenerativeModel("gemini-pro")
 
 response = model.generate_content("Explain AI in one line")
 
-print(response.text)'''
+print(response.text)

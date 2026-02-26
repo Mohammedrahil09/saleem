@@ -3,3 +3,6 @@ pandas
 rapidfuzz
 openpyxl
 sqlalchemy
+openai
+python-dotenv
+requests

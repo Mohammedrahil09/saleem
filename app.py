@@ -456,7 +456,7 @@ if df is not None:
 # 🤖 GENAI DATA ASSISTANT
 # =========================================================
 
-st.subheader("🤖 AI Data Assistant")
+st.subheader("🤖 AI Data Copilot")
 if st.button("Ask AI"):
     if question:
         with st.spinner("AI analyzing your data..."):
@@ -467,36 +467,47 @@ if st.button("Ask AI"):
             except Exception as e:
                 st.error(f"AI Error: {e}")
 
+# =========================================================
+# 🤖 CHATGPT-STYLE DATA COPILOT
+# =========================================================
+
+st.subheader("🤖 AI Data Copilot")
+
 if df is not None:
 
-    # Chat memory
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+    # Initialize chat memory
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-    user_msg = st.text_input("Ask anything about your dataset")
+    # Show chat history
+    for msg in st.session_state.messages:
+        if msg["role"] == "user":
+            st.chat_message("user").write(msg["content"])
+        else:
+            st.chat_message("assistant").write(msg["content"])
 
-    col1, col2 = st.columns([1,5])
-    with col1:
-        ask_btn = st.button("ask_ai_btn")
+    # Chat input box
+    prompt = st.chat_input("Ask anything about your dataset...")
 
-    if ask_btn and user_msg:
+    if prompt:
 
-        with st.spinner("AI analyzing your data..."):
+        # Add user message
+        st.session_state.messages.append(
+            {"role": "user", "content": prompt}
+        )
+        st.chat_message("user").write(prompt)
+
+        # AI response
+        with st.spinner("Analyzing your data..."):
             try:
-                # We changed "ask_gemini" to "ask_ai" right here:
-                reply = ask_ai(final_df, user_msg) 
+                reply = ask_ai(df, prompt)
             except Exception as e:
                 reply = f"AI Error: {e}"
 
-        st.session_state.chat_history.append(("You", user_msg))
-        st.session_state.chat_history.append(("AI", reply))
-
-    # Show chat history
-    for role, msg in st.session_state.chat_history:
-        if role == "You":
-            st.markdown(f"**🧑 You:** {msg}")
-        else:
-            st.markdown(f"**🤖 AI:** {msg}")
+        st.session_state.messages.append(
+            {"role": "assistant", "content": reply}
+        )
+        st.chat_message("assistant").write(reply)
 
 else:
-    st.info("Upload data to enable AI assistant.")
+    st.info("Upload data to enable AI Copilot.")
